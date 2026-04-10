@@ -1,0 +1,71 @@
+name: Brewbar
+options:
+  bundleIdPrefix: com.brewbar
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+targets:
+  Brewbar:
+    type: application
+    platform: macOS
+    sources:
+      - path: Brewbar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.brewbar.app
+        INFOPLIST_FILE: Brewbar/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Brewbar/Resources/Brewbar.entitlements
+        PRODUCT_NAME: Brewbar
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+        ENABLE_APP_SANDBOX: false
+    info:
+      path: Brewbar/Resources/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleName: Brewbar
+        CFBundleDisplayName: Brewbar
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        NSCalendarsUsageDescription: "Brewbar needs calendar access to display upcoming events."
+        NSLocationWhenInUseUsageDescription: "Brewbar uses your location for prayer times calculation."
+    entitlements:
+      path: Brewbar/Resources/Brewbar.entitlements
+      properties:
+        com.apple.security.network.client: true
+
+  BrewbarTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: BrewbarTests
+    dependencies:
+      - target: Brewbar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.brewbar.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Brewbar.app/Contents/MacOS/Brewbar"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  Brewbar:
+    build:
+      targets:
+        Brewbar: all
+        BrewbarTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - BrewbarTests
