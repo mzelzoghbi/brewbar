@@ -12,7 +12,7 @@ Live network speeds, IP info, connectivity status, and more — one click away, 
 
 | Module | Description | Status |
 |--------|-------------|--------|
-| Network Monitor | Live upload/download speed with sparkline graphs | Available |
+| Network Monitor | Live upload/download speed (Mbps) with traffic history chart | Available |
 | IP & Connectivity | Local/public IP, ping latency, VPN detection, DNS resolver | Available |
 | Active Ports | List listening ports, one-click kill, project-aware detection | Planned |
 | Clipboard History | Dev-aware clipboard with syntax detection and search | Planned |
@@ -24,15 +24,16 @@ Live network speeds, IP info, connectivity status, and more — one click away, 
 
 ## Installation
 
-### Homebrew (coming soon)
+### Homebrew
 
 ```bash
+brew tap mzelzoghbi/brewbar
 brew install --cask brewbar
 ```
 
 ### Manual
 
-Download the latest `.dmg` from [GitHub Releases](https://github.com/yourname/brewbar/releases).
+Download the latest `.dmg` from [GitHub Releases](https://github.com/mzelzoghbi/brewbar/releases).
 
 ## Requirements
 
@@ -42,7 +43,7 @@ Download the latest `.dmg` from [GitHub Releases](https://github.com/yourname/br
 ## Building from Source
 
 ```bash
-git clone https://github.com/yourname/brewbar
+git clone https://github.com/mzelzoghbi/brewbar
 cd brewbar
 brew install xcodegen
 xcodegen generate
