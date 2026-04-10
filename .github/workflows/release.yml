@@ -24,7 +24,6 @@ jobs:
           DEVELOPER_ID_CERT_BASE64: ${{ secrets.DEVELOPER_ID_CERT_BASE64 }}
           DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
         run: |
-          # Create temporary keychain
           KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -hex 16)
 
@@ -32,12 +31,10 @@ jobs:
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          # Import certificate
           CERT_PATH=$RUNNER_TEMP/cert.p12
           echo "$DEVELOPER_ID_CERT_BASE64" | base64 --decode > "$CERT_PATH"
           security import "$CERT_PATH" -P "$DEVELOPER_ID_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
-          # Allow codesign to access the keychain
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain
 
@@ -50,15 +47,31 @@ jobs:
             SYMROOT=build \
             CODE_SIGN_IDENTITY="Developer ID Application" \
             DEVELOPMENT_TEAM=5K3SF572KK \
-            CODE_SIGN_STYLE=Manual \
-            OTHER_CODE_SIGN_FLAGS="--timestamp --options runtime"
+            CODE_SIGN_STYLE=Manual
+
+      - name: Re-sign app with hardened runtime
+        run: |
+          APP_PATH="build/Release/Brewbar.app"
+
+          # Sign all nested binaries first, then the app bundle
+          find "$APP_PATH" -type f -perm +111 -not -name "*.plist" -not -name "*.json" | while read binary; do
+            codesign --force --sign "Developer ID Application: Mohamed ElZoghbi (5K3SF572KK)" \
+              --timestamp --options runtime "$binary" 2>/dev/null || true
+          done
+
+          # Sign the main app bundle
+          codesign --force --deep --sign "Developer ID Application: Mohamed ElZoghbi (5K3SF572KK)" \
+            --timestamp --options runtime "$APP_PATH"
+
+          # Verify
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
       - name: Create DMG
         run: bash scripts/build_dmg.sh
 
       - name: Sign DMG
         run: |
-          codesign --force --sign "Developer ID Application" --timestamp Brewbar.dmg
+          codesign --force --sign "Developer ID Application: Mohamed ElZoghbi (5K3SF572KK)" --timestamp Brewbar.dmg
 
       - name: Notarize DMG
         env:
@@ -66,14 +79,25 @@ jobs:
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Submit for notarization and wait
           xcrun notarytool submit Brewbar.dmg \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_ID_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
-            --wait
+            --wait || {
+              # If notarization fails, fetch the log for debugging
+              SUBMISSION_ID=$(xcrun notarytool history \
+                --apple-id "$APPLE_ID" \
+                --password "$APPLE_ID_PASSWORD" \
+                --team-id "$APPLE_TEAM_ID" 2>&1 | head -5 | grep -oE '[0-9a-f-]{36}' | head -1)
+              if [ -n "$SUBMISSION_ID" ]; then
+                xcrun notarytool log "$SUBMISSION_ID" \
+                  --apple-id "$APPLE_ID" \
+                  --password "$APPLE_ID_PASSWORD" \
+                  --team-id "$APPLE_TEAM_ID"
+              fi
+              exit 1
+            }
 
-          # Staple the notarization ticket to the DMG
           xcrun stapler staple Brewbar.dmg
 
       - name: Clean up keychain
