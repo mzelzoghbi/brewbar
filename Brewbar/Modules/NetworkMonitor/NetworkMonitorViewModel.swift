@@ -40,8 +40,8 @@ final class NetworkMonitorViewModel: ObservableObject {
 
     func scheduleTimer() {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: settings.networkUpdateInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+        timer = Timer.scheduledTimer(withTimeInterval: settings.networkUpdateInterval, repeats: true) { @Sendable [weak self] _ in
+            Task { @MainActor [weak self] in
                 self?.poll()
             }
         }

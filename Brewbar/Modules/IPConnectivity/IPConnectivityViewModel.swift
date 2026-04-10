@@ -49,8 +49,8 @@ final class IPConnectivityViewModel: ObservableObject {
     func start() {
         startNetworkMonitor()
         refreshAll()
-        timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+        timer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { @Sendable [weak self] _ in
+            Task { @MainActor [weak self] in
                 self?.refreshAll()
             }
         }
@@ -104,8 +104,8 @@ final class IPConnectivityViewModel: ObservableObject {
     // MARK: - Private
 
     private func startNetworkMonitor() {
-        monitor.pathUpdateHandler = { [weak self] path in
-            Task { @MainActor in
+        monitor.pathUpdateHandler = { @Sendable [weak self] path in
+            Task { @MainActor [weak self] in
                 self?.isOnline = path.status == .satisfied
             }
         }
