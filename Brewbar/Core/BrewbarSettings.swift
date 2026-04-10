@@ -34,6 +34,10 @@ final class BrewbarSettings: ObservableObject {
         didSet { defaults.set(networkBandwidthAlertThreshold, forKey: "networkBandwidthAlertThreshold") }
     }
 
+    @Published var networkLayoutVertical: Bool {
+        didSet { defaults.set(networkLayoutVertical, forKey: "networkLayoutVertical") }
+    }
+
     // MARK: - IP & Connectivity
 
     @Published var pingHosts: [String] {
@@ -60,23 +64,24 @@ final class BrewbarSettings: ObservableObject {
         self.networkDisplayUnit = NetworkDisplayUnit(rawValue: defaults.string(forKey: "networkDisplayUnit") ?? "auto") ?? .auto
         self.networkShowUpload = defaults.object(forKey: "networkShowUpload") as? Bool ?? true
         self.networkShowDownload = defaults.object(forKey: "networkShowDownload") as? Bool ?? true
-        self.networkBandwidthAlertThreshold = defaults.object(forKey: "networkBandwidthAlertThreshold") as? Double ?? 10.0
+        self.networkBandwidthAlertThreshold = defaults.object(forKey: "networkBandwidthAlertThreshold") as? Double ?? 80.0
+        self.networkLayoutVertical = defaults.bool(forKey: "networkLayoutVertical")
         self.pingHosts = defaults.stringArray(forKey: "pingHosts") ?? ["8.8.8.8", "1.1.1.1"]
     }
 }
 
 enum NetworkDisplayUnit: String, CaseIterable, Identifiable {
     case auto = "auto"
-    case kb = "KB"
-    case mb = "MB"
+    case kbps = "Kbps"
+    case mbps = "Mbps"
 
     var id: String { rawValue }
 
     var displayName: String {
         switch self {
         case .auto: return "Auto"
-        case .kb: return "KB/s"
-        case .mb: return "MB/s"
+        case .kbps: return "Kbps"
+        case .mbps: return "Mbps"
         }
     }
 }

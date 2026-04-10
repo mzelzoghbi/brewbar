@@ -15,7 +15,7 @@ struct NetworkDropdownView: View {
 
                 Divider()
 
-                // Sparkline chart
+                // Traffic bar chart
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Traffic History")
                         .font(.caption)
@@ -23,20 +23,18 @@ struct NetworkDropdownView: View {
 
                     Chart {
                         ForEach(Array(viewModel.downloadHistory.enumerated()), id: \.offset) { index, value in
-                            LineMark(
+                            BarMark(
                                 x: .value("Time", index),
-                                y: .value("Speed", value / 1_000)
+                                y: .value("Speed", value * 8 / 1_000_000)
                             )
-                            .foregroundStyle(.green)
-                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(Color.green.opacity(0.7))
                         }
                         ForEach(Array(viewModel.uploadHistory.enumerated()), id: \.offset) { index, value in
-                            LineMark(
+                            BarMark(
                                 x: .value("Time", index),
-                                y: .value("Speed", value / 1_000)
+                                y: .value("Speed", value * 8 / 1_000_000)
                             )
-                            .foregroundStyle(.blue)
-                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(Color.blue.opacity(0.7))
                         }
                     }
                     .chartXAxis(.hidden)
@@ -44,7 +42,7 @@ struct NetworkDropdownView: View {
                         AxisMarks(position: .leading) { value in
                             AxisValueLabel {
                                 if let v = value.as(Double.self) {
-                                    Text("\(Int(v)) KB/s")
+                                    Text("\(Int(v)) Mbps")
                                         .font(.system(size: 8))
                                 }
                             }
@@ -53,12 +51,22 @@ struct NetworkDropdownView: View {
                     .frame(height: 80)
 
                     HStack(spacing: 12) {
-                        Label("Upload", systemImage: "circle.fill")
-                            .font(.caption2)
-                            .foregroundColor(.blue)
-                        Label("Download", systemImage: "circle.fill")
-                            .font(.caption2)
-                            .foregroundColor(.green)
+                        HStack(spacing: 4) {
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(Color.blue.opacity(0.7))
+                                .frame(width: 10, height: 10)
+                            Text("Upload")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        HStack(spacing: 4) {
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(Color.green.opacity(0.7))
+                                .frame(width: 10, height: 10)
+                            Text("Download")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
 

@@ -9,8 +9,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let contextEngine = ContextEngine()
     private var statusBarHostingView: NSHostingView<AnyView>?
     private var eventMonitor: Any?
+    static var shared: AppDelegate?
+    private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppDelegate.shared = self
         registerModules()
         setupStatusItem()
         setupPopover()
@@ -71,6 +74,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 popover.performClose(nil)
             }
         }
+    }
+
+    func openSettings() {
+        if let window = settingsWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let settingsView = SettingsView()
+        let hostingController = NSHostingController(rootView: settingsView)
+
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Brewbar Settings"
+        window.styleMask = [.titled, .closable, .resizable]
+        window.setContentSize(NSSize(width: 520, height: 320))
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+
+        settingsWindow = window
     }
 
     @objc private func togglePopover() {

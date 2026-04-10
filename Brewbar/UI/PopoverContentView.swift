@@ -54,17 +54,9 @@ struct PopoverContentView: View {
 
             // Footer
             HStack {
-                if !contextEngine.activeApp.isEmpty {
-                    Image(systemName: "app.fill")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    Text(contextEngine.activeApp)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
                 Spacer()
                 Button("Settings...") {
-                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    AppDelegate.shared?.openSettings()
                 }
                 .buttonStyle(.plain)
                 .font(.caption)

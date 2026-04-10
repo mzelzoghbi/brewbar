@@ -20,7 +20,6 @@ final class NetworkMonitorViewModel: ObservableObject {
     private var previousSnapshot: NetworkDataSource.Snapshot?
     private var initialBytesIn: UInt64 = 0
     private var initialBytesOut: UInt64 = 0
-    private var hasSetInitial = false
     private let historySize = 60
 
     func start() {
@@ -28,7 +27,6 @@ final class NetworkMonitorViewModel: ObservableObject {
         initialBytesIn = snapshot.totalBytesIn
         initialBytesOut = snapshot.totalBytesOut
         previousSnapshot = snapshot
-        hasSetInitial = true
 
         updateActiveInterface(from: snapshot)
         fetchPublicIP()
@@ -85,14 +83,15 @@ final class NetworkMonitorViewModel: ObservableObject {
     }
 
     private func updateActiveInterface(from snapshot: NetworkDataSource.Snapshot) {
-        if let active = dataSource.activeInterface(from: snapshot) {
-            activeInterface = active.name
+        if let primary = dataSource.primaryInterface(from: snapshot) ?? dataSource.activeInterface(from: snapshot) {
+            activeInterface = primary.name
         }
         localIP = getLocalIP() ?? "—"
     }
 
     private func checkBandwidthAlert() {
-        let thresholdBytes = settings.networkBandwidthAlertThreshold * 1_000_000
+        // Threshold is in Mbps, convert to bytes/s for comparison
+        let thresholdBytes = settings.networkBandwidthAlertThreshold * 1_000_000 / 8
         if downloadSpeed > thresholdBytes || uploadSpeed > thresholdBytes {
             sendBandwidthAlert()
         }
@@ -101,7 +100,7 @@ final class NetworkMonitorViewModel: ObservableObject {
     private func sendBandwidthAlert() {
         let content = UNMutableNotificationContent()
         content.title = "Brewbar: High Bandwidth"
-        content.body = "Network speed exceeded \(formatSpeed(settings.networkBandwidthAlertThreshold * 1_000_000))"
+        content.body = "Network speed exceeded \(formatSpeed(settings.networkBandwidthAlertThreshold * 1_000_000 / 8))"
         content.sound = .default
 
         let request = UNNotificationRequest(
@@ -155,20 +154,21 @@ final class NetworkMonitorViewModel: ObservableObject {
 // MARK: - Formatting
 
 func formatSpeed(_ bytesPerSecond: Double, unit: NetworkDisplayUnit = .auto) -> String {
+    let bitsPerSecond = bytesPerSecond * 8
     switch unit {
-    case .kb:
-        return String(format: "%.1f KB/s", bytesPerSecond / 1_000)
-    case .mb:
-        return String(format: "%.1f MB/s", bytesPerSecond / 1_000_000)
+    case .kbps:
+        return String(format: "%.0f Kbps", bitsPerSecond / 1_000)
+    case .mbps:
+        return String(format: "%.1f Mbps", bitsPerSecond / 1_000_000)
     case .auto:
-        if bytesPerSecond < 1_000 {
-            return String(format: "%.0f B/s", bytesPerSecond)
-        } else if bytesPerSecond < 1_000_000 {
-            return String(format: "%.1f KB/s", bytesPerSecond / 1_000)
-        } else if bytesPerSecond < 1_000_000_000 {
-            return String(format: "%.1f MB/s", bytesPerSecond / 1_000_000)
+        if bitsPerSecond < 1_000 {
+            return String(format: "%.0f bps", bitsPerSecond)
+        } else if bitsPerSecond < 1_000_000 {
+            return String(format: "%.0f Kbps", bitsPerSecond / 1_000)
+        } else if bitsPerSecond < 1_000_000_000 {
+            return String(format: "%.1f Mbps", bitsPerSecond / 1_000_000)
         } else {
-            return String(format: "%.2f GB/s", bytesPerSecond / 1_000_000_000)
+            return String(format: "%.2f Gbps", bitsPerSecond / 1_000_000_000)
         }
     }
 }

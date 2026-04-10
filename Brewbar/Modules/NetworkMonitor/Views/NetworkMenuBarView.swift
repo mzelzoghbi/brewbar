@@ -2,30 +2,46 @@ import SwiftUI
 
 struct NetworkMenuBarView: View {
     @ObservedObject var viewModel: NetworkMonitorViewModel
-
-    private let settings = BrewbarSettings.shared
+    @ObservedObject private var settings = BrewbarSettings.shared
 
     var body: some View {
-        HStack(spacing: 4) {
-            if settings.networkShowUpload {
-                HStack(spacing: 2) {
-                    Text("↑")
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
-                    Text(formatSpeed(viewModel.uploadSpeed, unit: settings.networkDisplayUnit))
-                        .font(.system(size: 10, weight: .medium, design: .monospaced))
-                }
-            }
+        if settings.networkLayoutVertical {
+            verticalLayout
+        } else {
+            horizontalLayout
+        }
+    }
 
-            if settings.networkShowDownload {
-                HStack(spacing: 2) {
-                    Text("↓")
-                        .font(.system(size: 9, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
-                    Text(formatSpeed(viewModel.downloadSpeed, unit: settings.networkDisplayUnit))
-                        .font(.system(size: 10, weight: .medium, design: .monospaced))
-                }
+    private var horizontalLayout: some View {
+        HStack(spacing: 6) {
+            if settings.networkShowUpload {
+                speedLabel(arrow: "arrow.up", speed: viewModel.uploadSpeed, color: .orange)
             }
+            if settings.networkShowDownload {
+                speedLabel(arrow: "arrow.down", speed: viewModel.downloadSpeed, color: .cyan)
+            }
+        }
+    }
+
+    private var verticalLayout: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if settings.networkShowUpload {
+                speedLabel(arrow: "arrow.up", speed: viewModel.uploadSpeed, color: .orange)
+            }
+            if settings.networkShowDownload {
+                speedLabel(arrow: "arrow.down", speed: viewModel.downloadSpeed, color: .cyan)
+            }
+        }
+    }
+
+    private func speedLabel(arrow: String, speed: Double, color: Color) -> some View {
+        HStack(spacing: 3) {
+            Image(systemName: arrow)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(color)
+            Text(formatSpeed(speed, unit: settings.networkDisplayUnit))
+                .font(.system(size: settings.networkLayoutVertical ? 9 : 12, weight: .medium, design: .monospaced))
+                .frame(minWidth: settings.networkLayoutVertical ? 58 : 72, alignment: .leading)
         }
     }
 }

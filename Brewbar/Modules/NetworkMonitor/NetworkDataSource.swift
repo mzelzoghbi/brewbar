@@ -77,14 +77,24 @@ final class NetworkDataSource {
         snapshot.interfaces.max(by: { ($0.bytesIn + $0.bytesOut) < ($1.bytesIn + $1.bytesOut) })
     }
 
-    private func interfaceName(for index: Int) -> String? {
-        var ifr = ifreq()
-        let name = if_indextoname(UInt32(index), &ifr.ifr_name.0)
-        guard name != nil else { return nil }
-        return withUnsafePointer(to: &ifr.ifr_name) { ptr in
-            ptr.withMemoryRebound(to: CChar.self, capacity: Int(IFNAMSIZ)) { cStr in
-                String(cString: cStr)
-            }
+    /// Returns the primary interface — the one attached to the default route.
+    /// Falls back to the interface with the most traffic.
+    func primaryInterface(from snapshot: Snapshot) -> InterfaceStats? {
+        // Prefer en0 (WiFi) or en* (Ethernet) — these carry real user traffic
+        if let en0 = snapshot.interfaces.first(where: { $0.name == "en0" && $0.bytesIn > 0 }) {
+            return en0
         }
+        // Fall back to any en* with traffic
+        if let en = snapshot.interfaces.first(where: { $0.name.hasPrefix("en") && $0.bytesIn > 0 }) {
+            return en
+        }
+        // Last resort: highest traffic interface
+        return activeInterface(from: snapshot)
+    }
+
+    private func interfaceName(for index: Int) -> String? {
+        var buf = [CChar](repeating: 0, count: Int(IFNAMSIZ))
+        guard if_indextoname(UInt32(index), &buf) != nil else { return nil }
+        return String(cString: buf)
     }
 }

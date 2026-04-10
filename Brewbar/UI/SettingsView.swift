@@ -22,7 +22,7 @@ struct SettingsView: View {
                     Label("Modules", systemImage: "square.grid.2x2")
                 }
         }
-        .frame(width: 450, height: 300)
+        .frame(width: 520, height: 320)
     }
 }
 
@@ -51,34 +51,69 @@ struct GeneralSettingsView: View {
 struct NetworkSettingsView: View {
     @ObservedObject var settings: BrewbarSettings
 
-    private let intervals: [TimeInterval] = [1, 2, 5, 10, 30]
+    private let intervals: [TimeInterval] = [1, 5, 10, 20, 30]
 
     var body: some View {
-        Form {
-            Picker("Update Interval", selection: $settings.networkUpdateInterval) {
-                ForEach(intervals, id: \.self) { interval in
-                    Text("\(Int(interval))s").tag(interval)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Update Interval")
+                    .frame(width: 180, alignment: .trailing)
+                Picker("", selection: $settings.networkUpdateInterval) {
+                    ForEach(intervals, id: \.self) { interval in
+                        Text("\(Int(interval))s").tag(interval)
+                    }
                 }
+                .labelsHidden()
+                .frame(width: 80)
             }
 
-            Picker("Display Unit", selection: $settings.networkDisplayUnit) {
-                ForEach(NetworkDisplayUnit.allCases) { unit in
-                    Text(unit.displayName).tag(unit)
+            HStack {
+                Text("Display Unit")
+                    .frame(width: 180, alignment: .trailing)
+                Picker("", selection: $settings.networkDisplayUnit) {
+                    ForEach(NetworkDisplayUnit.allCases) { unit in
+                        Text(unit.displayName).tag(unit)
+                    }
                 }
+                .labelsHidden()
+                .frame(width: 80)
             }
 
-            Toggle("Show Upload Speed", isOn: $settings.networkShowUpload)
-            Toggle("Show Download Speed", isOn: $settings.networkShowDownload)
+            HStack {
+                Text("Show Upload Speed")
+                    .frame(width: 180, alignment: .trailing)
+                Toggle("", isOn: $settings.networkShowUpload)
+                    .labelsHidden()
+            }
+
+            HStack {
+                Text("Show Download Speed")
+                    .frame(width: 180, alignment: .trailing)
+                Toggle("", isOn: $settings.networkShowDownload)
+                    .labelsHidden()
+            }
+
+            HStack {
+                Text("Vertical Layout")
+                    .frame(width: 180, alignment: .trailing)
+                Toggle("", isOn: $settings.networkLayoutVertical)
+                    .labelsHidden()
+                Text("Stack upload/download in a column")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
 
             HStack {
                 Text("Bandwidth Alert Threshold")
-                Spacer()
-                TextField("MB/s", value: $settings.networkBandwidthAlertThreshold, format: .number)
+                    .frame(width: 180, alignment: .trailing)
+                TextField("", value: $settings.networkBandwidthAlertThreshold, format: .number)
                     .frame(width: 60)
-                Text("MB/s")
+                Text("Mbps")
+                    .foregroundColor(.secondary)
             }
         }
-        .padding()
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
 

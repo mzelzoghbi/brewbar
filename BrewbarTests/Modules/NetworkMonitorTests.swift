@@ -25,15 +25,21 @@ final class NetworkMonitorTests: XCTestCase {
     }
 
     func testFormatSpeedAutoScaling() {
-        XCTAssertEqual(formatSpeed(500), "500 B/s")
-        XCTAssertEqual(formatSpeed(1_500), "1.5 KB/s")
-        XCTAssertEqual(formatSpeed(1_500_000), "1.5 MB/s")
-        XCTAssertEqual(formatSpeed(1_500_000_000), "1.50 GB/s")
+        // 500 bytes/s = 4000 bps = 4 Kbps
+        XCTAssertEqual(formatSpeed(500), "4 Kbps")
+        // 1500 bytes/s = 12 Kbps
+        XCTAssertEqual(formatSpeed(1_500), "12 Kbps")
+        // 1.5 MB/s = 12 Mbps
+        XCTAssertEqual(formatSpeed(1_500_000), "12.0 Mbps")
+        // 1.5 GB/s = 12 Gbps
+        XCTAssertEqual(formatSpeed(1_500_000_000), "12.00 Gbps")
     }
 
     func testFormatSpeedFixedUnit() {
-        XCTAssertEqual(formatSpeed(1_500_000, unit: .kb), "1500.0 KB/s")
-        XCTAssertEqual(formatSpeed(1_500_000, unit: .mb), "1.5 MB/s")
+        // 1.5 MB/s = 12000 Kbps
+        XCTAssertEqual(formatSpeed(1_500_000, unit: .kbps), "12000 Kbps")
+        // 1.5 MB/s = 12 Mbps
+        XCTAssertEqual(formatSpeed(1_500_000, unit: .mbps), "12.0 Mbps")
     }
 
     func testFormatBytes() {
