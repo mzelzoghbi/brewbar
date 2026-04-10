@@ -4,6 +4,7 @@ struct PopoverContentView: View {
     @ObservedObject var registry: ModuleRegistry
     @ObservedObject var contextEngine: ContextEngine
     @State private var selectedModuleId: String?
+    var initialModuleId: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -38,8 +39,10 @@ struct PopoverContentView: View {
             Divider()
 
             // Selected module content
-            if let moduleId = selectedModuleId ?? registry.enabledModules.first?.id,
-               let module = registry.enabledModules.first(where: { $0.id == moduleId })
+            let enabled = registry.enabledModules
+            let activeId = enabled.contains(where: { $0.id == selectedModuleId }) ? selectedModuleId : enabled.first?.id
+            if let moduleId = activeId,
+               let module = enabled.first(where: { $0.id == moduleId })
             {
                 AnyView(module.dropdownView)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -72,5 +75,10 @@ struct PopoverContentView: View {
             .padding(.vertical, 6)
         }
         .frame(width: 360, height: 480)
+        .onAppear {
+            if let initialModuleId {
+                selectedModuleId = initialModuleId
+            }
+        }
     }
 }

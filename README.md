@@ -1,30 +1,54 @@
-# Brewbar
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-macOS%2014%2B-blue?style=flat-square&logo=apple" alt="macOS 14+">
+  <img src="https://img.shields.io/badge/swift-5.10-orange?style=flat-square&logo=swift" alt="Swift 5.10">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
+  <img src="https://img.shields.io/github/v/release/mzelzoghbi/brewbar?style=flat-square&label=release" alt="Latest Release">
+  <img src="https://img.shields.io/github/actions/workflow/status/mzelzoghbi/brewbar/build.yml?style=flat-square&label=build" alt="Build Status">
+  <img src="https://img.shields.io/badge/homebrew-tap-important?style=flat-square&logo=homebrew" alt="Homebrew">
+</p>
 
-**The first context-aware, extensible developer toolkit for the macOS menu bar.**
+<h1 align="center">Brewbar</h1>
 
-Live network speeds, IP info, connectivity status, and more — one click away, always visible.
+<p align="center">
+  <strong>A native macOS menu bar developer toolkit.</strong><br>
+  Live network speeds, color picker, IP info, ping, DNS — one click away, always visible.
+</p>
 
-<!-- Screenshot: TODO - Add screenshot/GIF of menu bar in action -->
+<p align="center">
+  <code>brew tap mzelzoghbi/brewbar && brew install --cask brewbar</code>
+</p>
 
 ---
 
-## Features
+## What's Inside
 
-| Module | Description | Status |
-|--------|-------------|--------|
-| Network Monitor | Live upload/download speed (Mbps) with traffic history chart | Available |
-| IP & Connectivity | Local/public IP, ping latency, VPN detection, DNS resolver | Available |
-| Active Ports | List listening ports, one-click kill, project-aware detection | Planned |
-| Clipboard History | Dev-aware clipboard with syntax detection and search | Planned |
-| Encoder/Decoder | Base64, URL, JWT, hashing, JSON formatting | Planned |
-| Environment Switcher | Named env configs with Keychain storage | Planned |
-| Pomodoro Tracker | Focus timer with distraction detection | Planned |
-| Calendar View | Mini calendar with EventKit integration | Planned |
-| Prayer Times | Adhan notifications with Aladhan API | Planned |
+### Network Module
+
+Everything network in one unified panel:
+
+- **Live Speeds** — Upload/download in Kbps, Mbps, or Gbps with configurable update interval
+- **Traffic Chart** — Bar chart history of the last 60 data points
+- **Active Apps** — Top 5 apps using your network right now with live send/receive rates
+- **Online/Offline** — Real-time connectivity status via NWPathMonitor
+- **VPN Detection** — Automatically detects active VPN connections
+- **Public & Local IP** — One-click copy, refreshes on network change
+- **Interfaces** — All active interfaces (WiFi, Ethernet, VPN) with IPs
+- **Ping Latency** — TCP ping to configurable hosts (default: 8.8.8.8, 1.1.1.1)
+- **DNS Servers** — Shows your currently configured DNS servers
+- **DNS Lookup** — Resolve any domain to its IP addresses
+- **Session Stats** — Total bytes sent/received since launch
+- **Bandwidth Alerts** — Notification when speed exceeds your threshold
+
+### Color Picker
+
+- **Screen Sampler** — Click the eyedropper in the menu bar to pick any color from your screen
+- **All Formats** — HEX, RGB, RGBA, HSL, SwiftUI, UIKit — each with a copy button
+- **History** — Last 5 picked colors as clickable swatches
+- **Auto Popup** — Pick a color and the panel opens automatically with all values
 
 ## Installation
 
-### Homebrew
+### Homebrew (recommended)
 
 ```bash
 brew tap mzelzoghbi/brewbar
@@ -33,7 +57,7 @@ brew install --cask brewbar
 
 ### Manual
 
-Download the latest `.dmg` from [GitHub Releases](https://github.com/mzelzoghbi/brewbar/releases).
+Download the latest `.dmg` from [Releases](https://github.com/mzelzoghbi/brewbar/releases).
 
 ## Requirements
 
@@ -48,52 +72,68 @@ cd brewbar
 brew install xcodegen
 xcodegen generate
 open Brewbar.xcodeproj
-# Then Cmd+R in Xcode
 ```
 
 Or build from the command line:
 
 ```bash
 xcodegen generate
-xcodebuild -project Brewbar.xcodeproj -scheme Brewbar -configuration Debug build
+xcodebuild -project Brewbar.xcodeproj -scheme Brewbar build
 ```
+
+## Settings
+
+Open **Settings** from the popover footer to configure:
+
+| Setting | Options |
+|---------|---------|
+| Launch at Login | On/Off |
+| Update Interval | 1s, 5s, 10s, 20s, 30s |
+| Display Unit | Auto, Kbps, Mbps |
+| Show Upload/Download | Toggle each independently |
+| Vertical Layout | Stack speeds in a column |
+| Bandwidth Alert | Threshold in Mbps |
 
 ## Architecture
 
-Brewbar uses a modular architecture where every feature is a self-contained module conforming to the `BrewbarModule` protocol. Modules are registered at launch and can be independently enabled/disabled.
+Modular design — every feature is a self-contained module conforming to the `BrewbarModule` protocol. Modules are registered at launch and managed by the `ModuleRegistry`.
 
-Key components:
-- **BrewbarModule** — Protocol that all features implement
-- **ModuleRegistry** — Singleton managing module lifecycle
-- **ContextEngine** — Watches active app and project type for context-aware behavior
+```
+Brewbar/
+├── App/            # AppDelegate, ModuleRegistry, BrewbarApp
+├── Core/           # BrewbarModule protocol, Settings, Keychain
+├── Modules/
+│   ├── Network/    # Speeds, IP, ping, DNS, interfaces, top apps
+│   └── ColorPicker/# Screen sampler, format converter, history
+├── UI/             # PopoverContentView, MenuBarContentView, SettingsView
+└── Resources/      # Assets, entitlements, Info.plist
+```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
 
-## Plugin Development
+## Battery Optimized
 
-Third-party plugins conform to the same `BrewbarModule` protocol and are loaded from `~/.brewbar/plugins/`.
+Brewbar is designed to be light on resources:
 
-See [docs/PLUGINS.md](docs/PLUGINS.md) for the plugin development guide.
-
-## Contributing
-
-We welcome contributions! See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for how to get started.
-
-Look for issues labeled `good first issue` for beginner-friendly tasks.
+- **Speed polling** — Only timer running, at your chosen interval
+- **Pings** — Only run when you open the dropdown, not in background
+- **Interfaces & IP** — Refresh on network change events, not polling
+- **Top Apps** — Measured on-demand when dropdown opens
+- **Color Picker** — Zero background work, only active when you pick
 
 ## Roadmap
 
 | Version | Features |
 |---------|----------|
-| **v0.1** | Network Monitor + IP & Connectivity |
-| v0.2 | Active Ports + Pomodoro |
-| v0.3 | Clipboard History + Encoder/Decoder |
-| v0.4 | Environment Switcher |
-| v0.5 | Calendar View |
-| v0.6 | Prayer Times |
-| v1.0 | Plugin system + all 9 modules stable |
-| v2.0 | AI Quick Command |
+| **v0.1** | Network Module + Color Picker |
+| v0.2 | Active Ports + Clipboard History |
+| v0.3 | Encoder/Decoder + Environment Switcher |
+| v1.0 | Plugin system + stable release |
+
+## Contributing
+
+Contributions welcome! See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) — Crafted with love by Zak in Egypt.

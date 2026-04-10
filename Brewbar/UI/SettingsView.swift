@@ -3,7 +3,6 @@ import ServiceManagement
 
 struct SettingsView: View {
     @ObservedObject private var settings = BrewbarSettings.shared
-    @ObservedObject private var registry = ModuleRegistry.shared
 
     var body: some View {
         TabView {
@@ -16,11 +15,6 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Network", systemImage: "network")
                 }
-
-            ModulesSettingsView(registry: registry)
-                .tabItem {
-                    Label("Modules", systemImage: "square.grid.2x2")
-                }
         }
         .frame(width: 520, height: 320)
     }
@@ -30,13 +24,33 @@ struct GeneralSettingsView: View {
     @ObservedObject var settings: BrewbarSettings
 
     var body: some View {
-        Form {
-            Toggle("Launch at Login", isOn: $settings.launchAtLogin)
-                .onChange(of: settings.launchAtLogin) { _, newValue in
-                    setLaunchAtLogin(newValue)
+        VStack {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Launch at Login")
+                        .frame(width: 180, alignment: .trailing)
+                    Toggle("", isOn: $settings.launchAtLogin)
+                        .labelsHidden()
+                        .onChange(of: settings.launchAtLogin) { _, newValue in
+                            setLaunchAtLogin(newValue)
+                        }
                 }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer()
+
+            VStack(spacing: 4) {
+                Text("Brewbar v0.1.0")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text("Crafted with love by Zak in Egypt")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.bottom, 12)
         }
-        .padding()
+        .padding(24)
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) {
@@ -114,32 +128,5 @@ struct NetworkSettingsView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-}
-
-struct ModulesSettingsView: View {
-    @ObservedObject var registry: ModuleRegistry
-
-    var body: some View {
-        Form {
-            ForEach(registry.modules, id: \.id) { module in
-                HStack {
-                    Image(systemName: module.icon)
-                    Text(module.displayName)
-                    Spacer()
-                    Toggle("", isOn: Binding(
-                        get: { module.isEnabled },
-                        set: { newValue in
-                            if newValue {
-                                registry.enableModule(module.id)
-                            } else {
-                                registry.disableModule(module.id)
-                            }
-                        }
-                    ))
-                }
-            }
-        }
-        .padding()
     }
 }

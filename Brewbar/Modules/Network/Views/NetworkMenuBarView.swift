@@ -1,18 +1,32 @@
 import SwiftUI
 
 struct NetworkMenuBarView: View {
-    @ObservedObject var viewModel: NetworkMonitorViewModel
+    @ObservedObject var viewModel: NetworkViewModel
     @ObservedObject private var settings = BrewbarSettings.shared
 
     var body: some View {
-        if settings.networkLayoutVertical {
-            verticalLayout
-        } else {
-            horizontalLayout
+        HStack(spacing: 6) {
+            // Online/VPN indicator
+            Circle()
+                .fill(viewModel.isOnline ? Color.green : Color.red)
+                .frame(width: 6, height: 6)
+
+            if viewModel.hasVPN {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 9))
+                    .foregroundColor(.blue)
+            }
+
+            // Speed display
+            if settings.networkLayoutVertical {
+                verticalSpeeds
+            } else {
+                horizontalSpeeds
+            }
         }
     }
 
-    private var horizontalLayout: some View {
+    private var horizontalSpeeds: some View {
         HStack(spacing: 6) {
             if settings.networkShowUpload {
                 speedLabel(arrow: "arrow.up", speed: viewModel.uploadSpeed, color: .orange)
@@ -23,7 +37,7 @@ struct NetworkMenuBarView: View {
         }
     }
 
-    private var verticalLayout: some View {
+    private var verticalSpeeds: some View {
         VStack(alignment: .leading, spacing: 0) {
             if settings.networkShowUpload {
                 speedLabel(arrow: "arrow.up", speed: viewModel.uploadSpeed, color: .orange)

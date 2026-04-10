@@ -1,18 +1,15 @@
 import SwiftUI
 
 @MainActor
-final class NetworkMonitorModule: BrewbarModule, ObservableObject {
-    let id = "network-monitor"
-    let displayName = "Network Monitor"
+final class NetworkModule: BrewbarModule, ObservableObject {
+    let id = "network"
+    let displayName = "Network"
     let icon = "network"
     @Published var isEnabled: Bool = true
 
-    let viewModel = NetworkMonitorViewModel()
-    private let contextEngine: ContextEngine
+    let viewModel = NetworkViewModel()
 
-    init(contextEngine: ContextEngine) {
-        self.contextEngine = contextEngine
-    }
+    init(contextEngine: ContextEngine) {}
 
     var menuBarView: AnyView {
         AnyView(NetworkMenuBarView(viewModel: viewModel))

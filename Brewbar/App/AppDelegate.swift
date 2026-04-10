@@ -25,11 +25,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func registerModules() {
-        let networkMonitor = NetworkMonitorModule(contextEngine: contextEngine)
-        let ipConnectivity = IPConnectivityModule(contextEngine: contextEngine)
-
-        registry.register(networkMonitor)
-        registry.register(ipConnectivity)
+        let network = NetworkModule(contextEngine: contextEngine)
+        let colorPicker = ColorPickerModule(contextEngine: contextEngine)
+        registry.register(network)
+        registry.register(colorPicker)
     }
 
     private func setupStatusItem() {
@@ -98,12 +97,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindow = window
     }
 
+    func showPopover(selectingModule moduleId: String) {
+        guard let button = statusItem.button else { return }
+
+        let popoverContent = PopoverContentView(
+            registry: registry,
+            contextEngine: contextEngine,
+            initialModuleId: moduleId
+        )
+        popover.contentViewController = NSHostingController(rootView: popoverContent)
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.makeKey()
+    }
+
     @objc private func togglePopover() {
         guard let button = statusItem.button else { return }
 
         if popover.isShown {
             popover.performClose(nil)
         } else {
+            // Recreate content each time to pick up module enable/disable changes
+            let popoverContent = PopoverContentView(
+                registry: registry,
+                contextEngine: contextEngine
+            )
+            popover.contentViewController = NSHostingController(rootView: popoverContent)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
         }
