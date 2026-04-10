@@ -15,6 +15,11 @@ struct SettingsView: View {
                 .tabItem {
                     Label("Network", systemImage: "network")
                 }
+
+            ColorPickerSettingsView(settings: settings)
+                .tabItem {
+                    Label("Color Picker", systemImage: "eyedropper")
+                }
         }
         .frame(width: 520, height: 320)
     }
@@ -130,3 +135,168 @@ struct NetworkSettingsView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
+
+struct ColorPickerSettingsView: View {
+    @ObservedObject var settings: BrewbarSettings
+    @State private var isRecording = false
+
+    private var shortcutDisplay: String {
+        HotkeyManager.displayString(
+            keyCode: settings.colorPickerKeyCode,
+            modifiers: NSEvent.ModifierFlags(rawValue: settings.colorPickerModifiers)
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Keyboard Shortcut")
+                    .frame(width: 180, alignment: .trailing)
+
+                ShortcutRecorderView(
+                    keyCode: $settings.colorPickerKeyCode,
+                    modifiers: $settings.colorPickerModifiers,
+                    isRecording: $isRecording
+                )
+            }
+
+            HStack {
+                Text("")
+                    .frame(width: 180, alignment: .trailing)
+                Text("Press the shortcut anywhere to pick a color from screen")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+}
+
+struct ShortcutRecorderView: NSViewRepresentable {
+    @Binding var keyCode: UInt16
+    @Binding var modifiers: UInt
+    @Binding var isRecording: Bool
+
+    func makeNSView(context: Context) -> ShortcutRecorderNSView {
+        let view = ShortcutRecorderNSView()
+        view.onShortcutRecorded = { newKeyCode, newModifiers in
+            keyCode = newKeyCode
+            modifiers = newModifiers.rawValue
+            isRecording = false
+            // Re-register the hotkey with new shortcut
+            AppDelegate.shared?.registerColorPickerHotkey()
+        }
+        view.onRecordingChanged = { recording in
+            isRecording = recording
+        }
+        view.updateDisplay(keyCode: keyCode, modifiers: NSEvent.ModifierFlags(rawValue: modifiers))
+        return view
+    }
+
+    func updateNSView(_ nsView: ShortcutRecorderNSView, context: Context) {
+        if !isRecording {
+            nsView.updateDisplay(keyCode: keyCode, modifiers: NSEvent.ModifierFlags(rawValue: modifiers))
+        }
+    }
+}
+
+final class ShortcutRecorderNSView: NSView {
+    var onShortcutRecorded: ((UInt16, NSEvent.ModifierFlags) -> Void)?
+    var onRecordingChanged: ((Bool) -> Void)?
+
+    private let label = NSTextField(labelWithString: "")
+    private let button = NSButton(title: "Record", target: nil, action: nil)
+    private var isRecording = false
+    private var localMonitor: Any?
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        setup()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setup()
+    }
+
+    private func setup() {
+        label.font = .monospacedSystemFont(ofSize: 13, weight: .medium)
+        label.alignment = .center
+        label.backgroundColor = NSColor.controlBackgroundColor
+        label.isBordered = true
+        label.isBezeled = true
+        label.bezelStyle = .roundedBezel
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        button.target = self
+        button.action = #selector(toggleRecording)
+        button.translatesAutoresizingMaskIntoConstraints = false
+
+        addSubview(label)
+        addSubview(button)
+
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+            label.widthAnchor.constraint(equalToConstant: 120),
+            label.heightAnchor.constraint(equalToConstant: 24),
+
+            button.leadingAnchor.constraint(equalTo: label.trailingAnchor, constant: 8),
+            button.centerYAnchor.constraint(equalTo: centerYAnchor),
+
+            heightAnchor.constraint(equalToConstant: 28),
+            widthAnchor.constraint(equalToConstant: 220),
+        ])
+    }
+
+    func updateDisplay(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) {
+        label.stringValue = HotkeyManager.displayString(keyCode: keyCode, modifiers: modifiers)
+    }
+
+    @objc private func toggleRecording() {
+        if isRecording {
+            stopRecording()
+        } else {
+            startRecording()
+        }
+    }
+
+    private func startRecording() {
+        isRecording = true
+        button.title = "Stop"
+        label.stringValue = "Press shortcut..."
+        label.textColor = .systemOrange
+        onRecordingChanged?(true)
+
+        // Temporarily unregister the hotkey so it doesn't fire while recording
+        HotkeyManager.shared.unregister()
+
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self else { return event }
+
+            let mask: NSEvent.ModifierFlags = [.command, .option, .shift, .control]
+            let mods = event.modifierFlags.intersection(mask)
+
+            // Require at least one modifier
+            guard !mods.isEmpty else { return nil }
+
+            self.onShortcutRecorded?(event.keyCode, mods)
+            self.stopRecording()
+            return nil
+        }
+    }
+
+    private func stopRecording() {
+        isRecording = false
+        button.title = "Record"
+        label.textColor = .labelColor
+        onRecordingChanged?(false)
+
+        if let monitor = localMonitor {
+            NSEvent.removeMonitor(monitor)
+            localMonitor = nil
+        }
+    }
+}
+

@@ -20,6 +20,14 @@
 
 ---
 
+<p align="center">
+  <img src="screenshots/network.png" width="360" alt="Network Module">
+  &nbsp;&nbsp;
+  <img src="screenshots/color-picker.png" width="360" alt="Color Picker">
+</p>
+
+---
+
 ## What's Inside
 
 ### Network Module
@@ -45,6 +53,7 @@ Everything network in one unified panel:
 - **All Formats** — HEX, RGB, RGBA, HSL, SwiftUI, UIKit — each with a copy button
 - **History** — Last 5 picked colors as clickable swatches
 - **Auto Popup** — Pick a color and the panel opens automatically with all values
+- **Global Shortcut** — Default `⌥⇧C`, configurable in Settings
 
 ## Installation
 

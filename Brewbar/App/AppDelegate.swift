@@ -12,16 +12,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppDelegate?
     private var settingsWindow: NSWindow?
 
+    private let settings = BrewbarSettings.shared
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
         registerModules()
         setupStatusItem()
         setupPopover()
         setupEventMonitor()
+        registerColorPickerHotkey()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         registry.stopAll()
+        HotkeyManager.shared.unregister()
     }
 
     private func registerModules() {
@@ -56,7 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupPopover() {
         popover = NSPopover()
-        popover.contentSize = NSSize(width: 360, height: 480)
+        popover.contentSize = NSSize(width: 370, height: 500)
         popover.behavior = .transient
         popover.animates = true
 
@@ -108,6 +112,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(rootView: popoverContent)
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.makeKey()
+    }
+
+    func registerColorPickerHotkey() {
+        let modifiers = NSEvent.ModifierFlags(rawValue: settings.colorPickerModifiers)
+        HotkeyManager.shared.register(keyCode: settings.colorPickerKeyCode, modifiers: modifiers) { [weak self] in
+            guard let self,
+                  let module = self.registry.modules.first(where: { $0.id == "color-picker" }) as? ColorPickerModule
+            else { return }
+            module.viewModel.pickColor()
+        }
     }
 
     @objc private func togglePopover() {

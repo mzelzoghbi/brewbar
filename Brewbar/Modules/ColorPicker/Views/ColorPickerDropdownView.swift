@@ -8,13 +8,24 @@ struct ColorPickerDropdownView: View {
             VStack(alignment: .leading, spacing: 12) {
                 // Pick button
                 Button(action: { viewModel.pickColor() }) {
-                    HStack {
+                    HStack(spacing: 6) {
                         Image(systemName: "eyedropper.halffull")
+                            .font(.system(size: 14, weight: .medium))
                         Text(viewModel.isPicking ? "Click anywhere..." : "Pick Color from Screen")
+                            .font(.system(size: 13, weight: .medium))
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(Color.accentColor.opacity(0.15))
+                    .padding(.vertical, 10)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.accentColor.opacity(0.15), Color.accentColor.opacity(0.08)],
+                            startPoint: .top, endPoint: .bottom
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
+                    )
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -24,47 +35,55 @@ struct ColorPickerDropdownView: View {
                 if let picked = viewModel.currentColor {
                     ColorDetailView(picked: picked)
                 } else {
-                    Text("No color picked yet. Click above to sample a color from anywhere on screen.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.vertical, 8)
+                    VStack(spacing: 6) {
+                        Image(systemName: "eyedropper")
+                            .font(.system(size: 24))
+                            .foregroundColor(.secondary.opacity(0.4))
+                        Text("Pick a color from anywhere on screen")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
                 }
 
                 // History
                 if !viewModel.history.isEmpty {
-                    Divider()
-
-                    Text("Recent Colors")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(.secondary)
+                        Text("RECENT")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(.secondary)
+                    }
 
                     HStack(spacing: 6) {
                         ForEach(viewModel.history) { color in
                             Button(action: {
                                 viewModel.currentColor = color
                             }) {
-                                VStack(spacing: 3) {
-                                    RoundedRectangle(cornerRadius: 4)
+                                VStack(spacing: 4) {
+                                    RoundedRectangle(cornerRadius: 6)
                                         .fill(color.swiftUIColor)
-                                        .frame(width: 44, height: 32)
+                                        .frame(height: 36)
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 4)
+                                            RoundedRectangle(cornerRadius: 6)
                                                 .strokeBorder(
                                                     viewModel.currentColor?.id == color.id
                                                         ? Color.accentColor
-                                                        : Color.primary.opacity(0.2),
+                                                        : Color.primary.opacity(0.15),
                                                     lineWidth: viewModel.currentColor?.id == color.id ? 2 : 0.5
                                                 )
                                         )
+                                        .shadow(color: color.swiftUIColor.opacity(0.3), radius: viewModel.currentColor?.id == color.id ? 4 : 0)
                                     Text(color.hex)
-                                        .font(.system(size: 8, design: .monospaced))
+                                        .font(.system(size: 8, weight: .medium, design: .monospaced))
                                         .foregroundColor(.secondary)
                                 }
                             }
                             .buttonStyle(.plain)
                         }
-                        Spacer()
                     }
                 }
             }
@@ -77,38 +96,40 @@ struct ColorDetailView: View {
     let picked: PickedColor
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             // Color preview
             HStack(spacing: 12) {
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(picked.swiftUIColor)
-                    .frame(width: 60, height: 60)
+                    .frame(width: 64, height: 64)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(Color.primary.opacity(0.2), lineWidth: 0.5)
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
                     )
+                    .shadow(color: picked.swiftUIColor.opacity(0.4), radius: 8, y: 2)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(picked.hex)
-                        .font(.system(.title2, design: .monospaced))
-                        .fontWeight(.semibold)
+                        .font(.system(size: 20, weight: .bold, design: .monospaced))
                         .textSelection(.enabled)
                     Text(picked.rgb)
-                        .font(.system(.caption, design: .monospaced))
+                        .font(.system(size: 11, design: .monospaced))
                         .foregroundColor(.secondary)
                         .textSelection(.enabled)
                 }
             }
 
-            Divider()
-
-            // All formats
-            ColorValueRow(label: "HEX", value: picked.hex)
-            ColorValueRow(label: "RGB", value: picked.rgb)
-            ColorValueRow(label: "RGBA", value: picked.rgba)
-            ColorValueRow(label: "HSL", value: picked.hsl)
-            ColorValueRow(label: "SwiftUI", value: picked.swiftUI)
-            ColorValueRow(label: "UIKit", value: picked.uiKit)
+            // All formats in a card
+            VStack(spacing: 0) {
+                ColorValueRow(label: "HEX", value: picked.hex, isFirst: true)
+                ColorValueRow(label: "RGB", value: picked.rgb)
+                ColorValueRow(label: "RGBA", value: picked.rgba)
+                ColorValueRow(label: "HSL", value: picked.hsl)
+                ColorValueRow(label: "SwiftUI", value: picked.swiftUI)
+                ColorValueRow(label: "UIKit", value: picked.uiKit, isLast: true)
+            }
+            .background(Color.primary.opacity(0.04))
+            .cornerRadius(8)
         }
     }
 }
@@ -116,26 +137,41 @@ struct ColorDetailView: View {
 struct ColorValueRow: View {
     let label: String
     let value: String
+    var isFirst: Bool = false
+    var isLast: Bool = false
+    @State private var copied = false
 
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
             Text(label)
-                .font(.caption)
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundColor(.secondary)
-                .frame(width: 50, alignment: .trailing)
+                .frame(width: 48, alignment: .trailing)
             Text(value)
-                .font(.system(.caption, design: .monospaced))
+                .font(.system(size: 10, design: .monospaced))
                 .textSelection(.enabled)
                 .lineLimit(1)
             Spacer()
             Button(action: {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(value, forType: .string)
+                copied = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    copied = false
+                }
             }) {
-                Image(systemName: "doc.on.doc")
-                    .font(.caption2)
+                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 9))
+                    .foregroundColor(copied ? .green : .secondary.opacity(0.5))
             }
             .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .overlay(alignment: .bottom) {
+            if !isLast {
+                Divider().opacity(0.3).padding(.leading, 66)
+            }
         }
     }
 }

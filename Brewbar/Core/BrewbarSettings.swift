@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Centralized settings wrapper around UserDefaults.
@@ -38,6 +39,16 @@ final class BrewbarSettings: ObservableObject {
         didSet { defaults.set(networkLayoutVertical, forKey: "networkLayoutVertical") }
     }
 
+    // MARK: - Color Picker
+
+    @Published var colorPickerKeyCode: UInt16 {
+        didSet { defaults.set(Int(colorPickerKeyCode), forKey: "colorPickerKeyCode") }
+    }
+
+    @Published var colorPickerModifiers: UInt {
+        didSet { defaults.set(colorPickerModifiers, forKey: "colorPickerModifiers") }
+    }
+
     // MARK: - IP & Connectivity
 
     @Published var pingHosts: [String] {
@@ -66,6 +77,9 @@ final class BrewbarSettings: ObservableObject {
         self.networkShowDownload = defaults.object(forKey: "networkShowDownload") as? Bool ?? true
         self.networkBandwidthAlertThreshold = defaults.object(forKey: "networkBandwidthAlertThreshold") as? Double ?? 80.0
         self.networkLayoutVertical = defaults.bool(forKey: "networkLayoutVertical")
+        // Default: ⌥⇧C — keyCode 8 is "C"
+        self.colorPickerKeyCode = UInt16(defaults.object(forKey: "colorPickerKeyCode") as? Int ?? 8)
+        self.colorPickerModifiers = defaults.object(forKey: "colorPickerModifiers") as? UInt ?? (NSEvent.ModifierFlags.option.union(.shift).rawValue)
         self.pingHosts = defaults.stringArray(forKey: "pingHosts") ?? ["8.8.8.8", "1.1.1.1"]
     }
 }
